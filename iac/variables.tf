@@ -9,3 +9,11 @@ variable "lambda_function_name" {
 variable "key_pair_name" {
   default = "ec2_key_pair"
 }
+
+variable "airflow_subnet_id" {
+  default = "subnet-02ba721d1f4017398"
+}
+
+variable "vpc_id" {
+  default = "vpc-08ac55c9b8d00ece9"
+}
