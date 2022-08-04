@@ -85,18 +85,19 @@ services:
       interval: 5s
       retries: 5
     restart: always
-    git-sync:
-      image: openweb/git-sync:0.0.1
-      environment:
-        GIT_SYNC_REPO: "https://github.com/mcamera/aws-anp-fuel-sales-etl"
-        GIT_SYNC_DEST: "/git"
-        GIT_SYNC_BRANCH: "main"
-        GIT_SYNC_REV: "FETCH_HEAD"
-        GIT_SYNC_WAIT: "10"
-      volumes:
-        - ./dags:/git/airflow/dags/
-        - ./include:/git/airflow/include/
-      restart: always
+
+  git-sync:
+    image: openweb/git-sync:0.0.1
+    environment:
+      GIT_SYNC_REPO: "https://github.com/mcamera/aws-anp-fuel-sales-etl"
+      GIT_SYNC_DEST: "/git"
+      GIT_SYNC_BRANCH: "main"
+      GIT_SYNC_REV: "FETCH_HEAD"
+      GIT_SYNC_WAIT: "10"
+    volumes:
+      - ./dags:/git/airflow/dags/
+      - ./include:/git/airflow/include/
+    restart: always
 
   redis:
     image: redis:latest
