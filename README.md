@@ -1,6 +1,5 @@
 # aws-anp-fuel-sales-etl
 
-
 > #### :rotating_light: ALERT! :rotating_light:
 > This project is still in development!
 
@@ -50,4 +49,4 @@ It was notice that the data was shifted after the file conversion proccessing. S
 ### This is the result that I have at this moment. I've just fixed the first row, but the problem still happens  with the others.
 <img src="./git_sources/data_shift_almost_resolved.jpg" alt="">
 
-Now, I'm searching for a better way to fix the entire data. After that, I have plans to add a task in the Airflow to validate the data using the Great Expectations.
+Now, I'm searching for a better way to fix the entire data. After that, I have plans to add a task in the Airflow to validate the data using the Great Expectations...
