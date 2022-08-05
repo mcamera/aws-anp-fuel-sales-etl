@@ -88,16 +88,16 @@ services:
 
   git-sync:
     image: openweb/git-sync:0.0.1
+    restart: always
     environment:
-      GIT_SYNC_REPO: "https://github.com/mcamera/aws-anp-fuel-sales-etl"
-      GIT_SYNC_DEST: "/git"
+      GIT_SYNC_REPO: "git@github.com:mcamera/aws-anp-fuel-sales-etl.git"
+      GIT_SYNC_DEST: "."
       GIT_SYNC_BRANCH: "main"
       GIT_SYNC_REV: "FETCH_HEAD"
       GIT_SYNC_WAIT: "10"
     volumes:
-      - ./dags:/git/airflow/dags/
-      - ./include:/git/airflow/include/
-    restart: always
+      - ./dags:/tmp/aws-anp-fuel-sales-etl/airflow/dags/
+      - ./include:/tmp/aws-anp-fuel-sales-etl/airflow/include/
 
   redis:
     image: redis:latest

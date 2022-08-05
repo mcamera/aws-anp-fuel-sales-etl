@@ -1,7 +1,9 @@
 import boto3
+import sys
+from airflow.models import Variable
 from airflow.decorators import dag, task
 from airflow.utils.dates import days_ago
-from airflow.models import Variable
+from include.extract_vendas_combustiveis import extractVendasCombustiveis
 
 aws_access_key_id = Variable.get("aws_access_key_id")
 aws_secret_access_key = Variable.get("aws_secret_access_key")
@@ -15,23 +17,39 @@ s3client = boto3.client("s3", aws_access_key_id=aws_access_key_id,
 
 default_args = {
     'owner': 'Marcelo Camera',
-    "depends_on_past": False,
-    "start_date": days_ago(2),
-    "email": ["airflow@airflow.com"],
+    'start_date': days_ago(1),
+    'retries': 0,
+    # 'retry_delay': timedelta(minutes=2),
+    # 'retry_exponential_backoff': False,
+    # 'max_retry_delay': timedelta(minutes=20),
+    'depends_on_past': False,
     "email_on_failure": False,
     "email_on_retry": False
 }
 
-@dag(default_args=default_args, schedule_interval=None, catchup=False, tags=["emr", "aws", "anp"], description="Pipeline para processamento de dados.")
-def anp_etl():
+@dag(
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+    max_active_runs=1,
+    tags=['ANP', 'aws', 'bronze', 'silver', 'oil fuels sales', 'diesel sales', 'emr', 's3'],
+    description='Pipeline ANP vendas combustíveis'
+    )
+def anp_sales_etl():
     """
-    Pipeline para processamento de dados.
+    Data processing pipeline
     """
 
     @task
-    def emr_process_data():
+    def extract_sales_sheet():
+        extract = extractVendasCombustiveis(s3client)
+        extract.get_vendas_combustiveis()
+        return True
+
+    @task
+    def transform_oil_fuels_sales():
         cluster_id = client.run_job_flow(
-            Name='EMR-ANP',
+            Name='ETL01',
             ServiceRole='EMR_DefaultRole',
             JobFlowRole='EMR_EC2_DefaultRole',
             VisibleToAllUsers=True,
@@ -107,16 +125,15 @@ def anp_etl():
                             '--conf', 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog', 
                             '--master', 'yarn',
                             '--deploy-mode', 'cluster',
-                            's3://anp-emr-files/code/pyspark/01_delta_spark_insert.py'
+                            's3://anp-etl-files/etl/02_transform_silver_oil_fuels_sales.py'
                         ]
                 }
             }],
         )
         return cluster_id["JobFlowId"]
-
-
+    
     @task
-    def wait_emr_step(cid: str):
+    def wait_transform_oil_fuels_sales(cid: str):
         waiter = client.get_waiter('step_complete')
         steps = client.list_steps(
             ClusterId=cid
@@ -131,15 +148,15 @@ def anp_etl():
                 'MaxAttempts': 120
             }
         )
-        return True
+        return cid, True
 
     @task
-    def upsert_delta(cid: str, success_before: bool):
+    def transform_diesel_sales(cid: str, success_before: bool):
         if success_before:
             newstep = client.add_job_flow_steps(
                 JobFlowId=cid,
                 Steps=[{
-                    'Name': 'Upsert da tabela Delta',
+                    'Name': 'ETL02',
                     'ActionOnFailure': "TERMINATE_CLUSTER",
                     'HadoopJarStep': {
                         'Jar': 'command-runner.jar',
@@ -149,17 +166,16 @@ def anp_etl():
                                 '--conf', 'spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog', 
                                 '--master', 'yarn',
                                 '--deploy-mode', 'cluster',
-                                's3://anp-emr-files/code/pyspark/02_delta_spark_upsert.py'
+                                's3://anp-etl-files/etl/03_transform_silver_diesel_sales.py'
                             ]
                     }
                 }]
             )
-            return newstep['StepIds'][0]
+            return cid, newstep['StepIds'][0]
 
     @task
-    def wait_upsert_delta(cid: str, stepId: str):
+    def wait_transform_diesel_sales(cid: str, stepId: str):
         waiter = client.get_waiter('step_complete')
-
         waiter.wait(
             ClusterId=cid,
             StepId=stepId,
@@ -168,22 +184,23 @@ def anp_etl():
                 'MaxAttempts': 120
             }
         )
-        return True
-
+        return cid, True
 
     @task
-    def terminate_emr_cluster(success_before: str, cid: str):
+    def terminate_emr_cluster(cid: str, success_before: str):
         if success_before:
             res = client.terminate_job_flows(
                 JobFlowIds=[cid]
             )
 
+    # Pipeline chain
+    # res_extract = extract_sales_sheet()
+    # cid = transform_oil_fuels_sales()
+    # res_emr = wait_transform_oil_fuels_sales()
+    # newstep = transform_diesel_sales(cid=cluid, success_before=res_emr)
+    # res_ba = wait_transform_diesel_sales(cid=cluid, stepId=newstep)
+    # res_ter = terminate_emr_cluster(success_before=res_ba, cid=cluid)
 
-    # Encadeando a pipeline
-    cluid = emr_process_data()
-    res_emr = wait_emr_step(cluid)
-    newstep = upsert_delta(cluid, res_emr)
-    res_ba = wait_upsert_delta(cluid, newstep)
-    res_ter = terminate_emr_cluster(res_ba, cluid)
+    terminate_emr_cluster(wait_transform_diesel_sales(transform_diesel_sales(wait_transform_oil_fuels_sales(transform_oil_fuels_sales(extract_sales_sheet())))))
 
-execucao = anp_etl()
+dag = anp_sales_etl()
