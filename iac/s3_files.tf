@@ -1,17 +1,17 @@
 # Creates S3 objects
 
-resource "aws_s3_object" "delta_insert" {
-  bucket = aws_s3_bucket.bucket-emr-files.id
-  key    = "pyspark/01_delta_spark_insert.py"
+resource "aws_s3_object" "etl02" {
+  bucket = aws_s3_bucket.bucket-etl-files.id
+  key    = "etl/01_transform_silver_oil_fuels_sales.py"
   acl    = "private"
-  source = "../etl/01_delta_spark_insert.py"
-  etag   = filemd5("../etl/01_delta_spark_insert.py")
+  source = "../etl/01_transform_silver_oil_fuels_sales.py"
+  etag   = filemd5("../etl/01_transform_silver_oil_fuels_sales.py")
 }
 
-resource "aws_s3_object" "delta_upsert" {
-  bucket = aws_s3_bucket.bucket-emr-files.id
-  key    = "pyspark/02_delta_spark_upsert.py"
+resource "aws_s3_object" "etl03" {
+  bucket = aws_s3_bucket.bucket-etl-files.id
+  key    = "etl/02_transform_silver_diesel_sales.py"
   acl    = "private"
-  source = "../etl/02_delta_spark_upsert.py"
-  etag   = filemd5("../etl/02_delta_spark_upsert.py")
+  source = "../etl/02_transform_silver_diesel_sales.py"
+  etag   = filemd5("../etl/02_transform_silver_diesel_sales.py")
 }

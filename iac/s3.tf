@@ -42,8 +42,8 @@ resource "aws_s3_bucket_acl" "bucket-gold-acl" {
   acl    = "private"
 }
 
-resource "aws_s3_bucket" "bucket-emr-files" {
-  bucket = "anp-emr-files"
+resource "aws_s3_bucket" "bucket-etl-files" {
+  bucket = "anp-etl-files"
 
   tags = {
     IAC     = "TF",
@@ -51,7 +51,7 @@ resource "aws_s3_bucket" "bucket-emr-files" {
   }
 }
 
-resource "aws_s3_bucket_acl" "bucket-emr-files-acl" {
-  bucket = aws_s3_bucket.bucket-emr-files.id
+resource "aws_s3_bucket_acl" "bucket-etl-files-acl" {
+  bucket = aws_s3_bucket.bucket-etl-files.id
   acl    = "private"
 }
