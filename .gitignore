@@ -1,3 +1,6 @@
+# Airflow
+airflow/logs/*
+
 .vscode/
 
 # Terraform files
