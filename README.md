@@ -33,7 +33,7 @@ TODO: To add more information about the remaining steps.
 - Docker-compose (in the EC2 virtual machine)
 
 # Deploy
-TODO: To add informations about the architecture deploy.
+TODO: To add information about the architecture deploy.
 
 # Data problem
 
@@ -55,6 +55,7 @@ It was implemented an algorithm to fix the data shifted. This is the result:
 
 # Next steps:
 
-1. Create codes to transform the data to silver and gold buckets.
-1. Create a Great Expectation task in airflow to validate the data source.
-1. Create the code for the table to be accessed by Athena.
+1. Review and document the Airflow's DAG
+1. Create code for the table to be accessed by Athena.
+1. Create a Great Expectation task in Airflow to validate the data source.
+1. Document the deploy process
