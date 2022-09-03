@@ -29,8 +29,8 @@ class extractVendasCombustiveis:
             output, error = process.communicate()
             logging.info('File downloaded!')
             return
-        except:
-            logging.error('Error when trying to download the file.')
+        except Exception as e:
+            logging.error(f'Error when trying to download the file: {e}')
             self.remove_temp_files()
             raise
 
@@ -39,13 +39,13 @@ class extractVendasCombustiveis:
         """
         try:
             logging.info('Converting the file...')
-            bashCommand = 'libreoffice --headless --convert-to xls --outdir ./converted ./vendas-combustiveis-m3.xls'
+            bashCommand = 'libreoffice --headless --convert-to xls --outdir ./converted vendas-combustiveis-m3.xls'
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
             logging.info('File converted!')
             return
-        except:
-            logging.error('Error when trying to convert the file.')
+        except Exception as e:
+            logging.error(f'Error when trying to convert the file: {e}')
             self.remove_temp_files()
             raise
     
@@ -92,10 +92,11 @@ class extractVendasCombustiveis:
                 df.iloc[rowindex, 4:17] = self.unshift(row[4:17].values.flatten().tolist())
 
             df.to_parquet(path=filepath)
-            boto3.resource('s3').Bucket('anp-bronze').upload_file(filepath, filepath)
+            self.s3client.upload_file(filepath, 'anp-bronze', filepath)
+            logging.info(f'{filepath} has been uploaded to the bucket!')
             return
-        except:
-            logging.error('Error when trying to upload the sheet.')
+        except Exception as e:
+            logging.error(f'Error when trying to upload the sheet: {e}')
             self.remove_temp_files()
             raise
     
