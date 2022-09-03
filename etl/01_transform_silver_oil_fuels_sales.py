@@ -15,16 +15,16 @@ spark = (
 
 # Read bronze data
 logging.info("Read bronze layer...")
-oil_fuels_sales = (
+sales_oil_fuels = (
     spark.read
     .format("parquet")
     .option("inferSchema", False)
-    .load("s3://anp-bronze/oil_fuels_sales/")
+    .load("s3://anp-bronze/sales_oil_fuels.parquet")
 )
 
 # Apply some transformations
-oil_fuels_sales = (
-    oil_fuels_sales
+sales_oil_fuels = (
+    sales_oil_fuels
     .withColumn('product', F.col('COMBUSTÍVEL'))   
     .withColumn('unit', F.substring(F.col('product'), -3, 2))  # gets the unit
     .withColumn('product', F.expr("substring(product, 1, length(product)-5)"))  # removes the unit from the product name
@@ -50,12 +50,12 @@ oil_fuels_sales = (
 # Write table in silver layer with delta format
 logging.info("Writing delta table into the silver layer...")
 (
-    oil_fuels_sales
+    sales_oil_fuels
     .write
     .mode("overwrite")
     .format("delta")
     .partitionBy("year")
-    .save("s3://anp-silver/oil_fuels_sales/")
+    .save("s3://anp-silver/sales_oil_fuels/")
 )
 
 logging.info("Process finished.")

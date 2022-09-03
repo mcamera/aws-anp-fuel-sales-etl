@@ -15,20 +15,19 @@ spark = (
 
 # Read silver data
 logging.info("Read from the silver layer...")
-oil_fuels_sales = (
+sales_oil_fuels = (
     spark.read
-    .format("parquet")
-    .option("inferSchema", True)
-    .load("s3://anp-silver/oil_fuels_sales/")
+    .format("delta")
+    .load("s3://anp-silver/sales_oil_fuels")
 )
 
 # Unpivot the table
 unpivot_expr = "stack(12, 'jan', jan, 'fev', fev, 'mar', mar, 'abr', abr, 'mai', mai, 'jun', jun, 'jul', jul, 'ago', ago, 'set', set, 'out', out, 'nov', nov, 'dez', dez) as (month, volume)"
-oil_fuels_sales = oil_fuels_sales.select('product','unit','year','uf','regiao',F.expr(unpivot_expr))
+sales_oil_fuels = sales_oil_fuels.select('product','unit','year','uf','regiao',F.expr(unpivot_expr))
 
 # Transforming the data
-oil_fuels_sales = (
-    oil_fuels_sales
+sales_oil_fuels = (
+    sales_oil_fuels
     .withColumn('month', F.when(F.col('month') == 'jan',1)
                            .when(F.col('month') == 'fev',2)
                            .when(F.col('month') == 'mar',3)
@@ -49,12 +48,15 @@ oil_fuels_sales = (
 # Write table in gold layer with the delta format
 logging.info("Writing delta table into the gold layer...")
 (
-    oil_fuels_sales
+    sales_oil_fuels
     .write
     .mode("overwrite")
     .format("delta")
     .partitionBy("year")
-    .save("s3://anp-gold/oil_fuels_sales/")
+    .save("s3://anp-gold/sales_oil_fuels/")
 )
 
-logging.info("Process finished.")
+# logging.info("Building symlink manifest...")
+# sales_oil_fuels.generate("symlink_format_manifest")
+# logging.info("Manifest built!")
+# logging.info("Pipeline finished.")
