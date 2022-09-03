@@ -2,18 +2,18 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "lambda_function_name" {
-  default = "Xls2Csv"
-}
+# variable "lambda_function_name" {
+#   default = "Xls2Csv"
+# }
 
 variable "key_pair_name" {
   default = "ec2_key_pair"
 }
 
 variable "airflow_subnet_id" {
-  default = "subnet-02ba721d1f4017398"
+  default = "subnet-0baf7ac9f346c734a"
 }
 
 variable "vpc_id" {
-  default = "vpc-08ac55c9b8d00ece9"
+  default = "vpc-056b58157ef1dd44b"
 }
